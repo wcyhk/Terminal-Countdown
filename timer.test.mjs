@@ -1,0 +1,7 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {durationFromMinutes,createTimer,remaining,start,pause,tick,subtract,reset,formatTime} from './timer.mjs';
+test('deadline survives delayed rendering',()=>{const t=start(createTimer(300000),100);assert.equal(remaining(t,300100),0);assert.equal(tick(t,300100).phase,'finished');assert.equal(remaining(t,200100),100000)});
+test('pause and resume preserve exact fractions and one deadline',()=>{let t=pause(start(createTimer(5000),100),1350);assert.equal(t.remaining,3750);assert.equal(remaining(t,9000),3750);t=start(t,10000);assert.equal(remaining(t,10750),3000);assert.equal(start(t,12000),t)});
+test('subtract clamps and finished timer cannot restart',()=>{const t=subtract(start(createTimer(10000),0),500);assert.equal(t.phase,'finished');assert.equal(t.remaining,0);assert.equal(start(t,1000),t);assert.equal(tick(t,10000),t)});
+test('reset returns selected duration without stale expiry',()=>{const t=reset(tick(start(createTimer(120000),0),120000));assert.equal(t.remaining,120000);assert.equal(tick(t,999999).phase,'ready')});
+test('strict custom input bounds',()=>{for(const v of ['-1','2abc','Infinity','0','181','1e2','',.001])assert.throws(()=>durationFromMinutes(v));assert.equal(durationFromMinutes('2.5'),150000)});
+test('display rounds up',()=>{assert.equal(formatTime(1),'00:01');assert.equal(formatTime(60001),'01:01');assert.equal(formatTime(0),'00:00')});
